@@ -192,7 +192,7 @@ func (d *dockerV20Client) findContainer(
 	ctx context.Context,
 ) (dockerContainer, string, error) {
 	logger := d.logger
-	containerName := d.getImageName()
+	containerName := d.config.Execution.DockerLaunchConfig.ContainerName
 	logger.Debug(message.NewMessage(message.MDockerContainerList, "Listing containers..."))
 
 	var containers []types.Container
