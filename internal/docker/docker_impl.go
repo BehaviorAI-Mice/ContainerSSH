@@ -1153,9 +1153,11 @@ loop:
 				return
 			}
 		} else {
-			if err := d.stopContainer(ctx); err != nil {
-				onExit(137)
-				return
+			if d.container.config.Execution.Mode != config.DockerExecutionModeSession {
+				if err := d.stopContainer(ctx); err != nil {
+					onExit(137)
+					return
+				}
 			}
 
 			if lastError = d.containerInspect(ctx, onExit); lastError == nil {
