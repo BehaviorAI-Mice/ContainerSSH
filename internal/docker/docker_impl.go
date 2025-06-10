@@ -200,6 +200,7 @@ func (d *dockerV20Client) findContainer(
 
 	d.backendRequestsMetric.Increment()
 	containers, err = d.dockerClient.ContainerList(ctx, types.ContainerListOptions{
+		All:     true,
 		Filters: filters.NewArgs(filters.KeyValuePair{Key: "name", Value: containerName}),
 	})
 
