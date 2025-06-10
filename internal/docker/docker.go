@@ -38,6 +38,12 @@ type dockerClient interface {
 		tty *bool,
 		cmd []string,
 	) (dockerContainer, error)
+
+	// findContainer find container for the user (based on the given container name).
+	// Return the container and the status if founded, return nil elsewise.
+	findContainer(
+		ctx context.Context,
+	) (dockerContainer, string, error)
 }
 
 // dockerContainer is the representation of a created container.

@@ -24,6 +24,12 @@ const MDockerContainerAttach = "DOCKER_CONTAINER_ATTACH"
 // session mode.
 const EDockerFailedContainerAttach = "DOCKER_CONTAINER_ATTACH_FAILED"
 
+// MDockerContainerList indicates that the ContainerSSH Docker module failed to list containers.
+const MDockerContainerList = "DOCKER_CONTAINER_LIST"
+
+// MDockerContainerListFailed indicates that the ContainerSSH Docker module is listing containers.
+const MDockerContainerListFailed = "DOCKER_CONTAINER_LIST_FAILED"
+
 // MDockerContainerCreate indicates that the ContainerSSH Docker module is creating a container.
 const MDockerContainerCreate = "DOCKER_CONTAINER_CREATE"
 

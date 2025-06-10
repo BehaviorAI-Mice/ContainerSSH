@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/docker/docker/api/types/filters"
 	"io"
 	"strconv"
 	"strings"
@@ -185,6 +186,59 @@ loop:
 	)
 	d.logger.Debug(err)
 	return err
+}
+
+func (d *dockerV20Client) findContainer(
+	ctx context.Context,
+) (dockerContainer, string, error) {
+	logger := d.logger
+	containerName := d.getImageName()
+	logger.Debug(message.NewMessage(message.MDockerContainerList, "Listing containers..."))
+
+	var containers []types.Container
+	var err error
+
+	d.backendRequestsMetric.Increment()
+	containers, err = d.dockerClient.ContainerList(ctx, types.ContainerListOptions{
+		Filters: filters.NewArgs(filters.KeyValuePair{Key: "name", Value: containerName}),
+	})
+
+	if err != nil {
+		d.backendFailuresMetric.Increment()
+		err = message.WrapUser(
+			err,
+			message.MDockerContainerListFailed,
+			UserMessageInitializeSSHSession,
+			"failed to list containers",
+		)
+		logger.Error(err)
+		return nil, "", err
+	}
+
+	if len(containers) == 1 {
+		logger.Debug(message.NewMessage(message.MDockerContainerList, "Found container with name %s.", containerName))
+		var cnt = containers[0]
+		return &dockerV20Container{
+			config:                d.config,
+			containerID:           cnt.ID,
+			dockerClient:          d.dockerClient,
+			logger:                logger.WithLabel("containerId", cnt.ID),
+			tty:                   true,
+			backendRequestsMetric: d.backendRequestsMetric,
+			backendFailuresMetric: d.backendFailuresMetric,
+			lock:                  &sync.Mutex{},
+			wg:                    &sync.WaitGroup{},
+			removeLock:            &sync.Mutex{},
+		}, cnt.State, nil
+	} else {
+		if len(containers) == 0 {
+			logger.Debug(message.NewMessage(message.MDockerContainerList, "No container found with name %s!", containerName))
+			return nil, "", nil
+		} else {
+			logger.Debug(message.NewMessage(message.MDockerContainerListFailed, "More than one containers found with name %s!", containerName))
+			return nil, "", errors.New("More than one containers found with name " + containerName)
+		}
+	}
 }
 
 func (d *dockerV20Client) createContainer(

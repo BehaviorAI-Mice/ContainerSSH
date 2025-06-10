@@ -7,10 +7,10 @@ import (
 	"io"
 	"strings"
 
-    "go.containerssh.io/containerssh/config"
-    "go.containerssh.io/containerssh/internal/sshserver"
-    "go.containerssh.io/containerssh/internal/unixutils"
-    "go.containerssh.io/containerssh/message"
+	"go.containerssh.io/containerssh/config"
+	"go.containerssh.io/containerssh/internal/sshserver"
+	"go.containerssh.io/containerssh/internal/unixutils"
+	"go.containerssh.io/containerssh/message"
 )
 
 type channelHandler struct {
@@ -148,15 +148,26 @@ func (c *channelHandler) handleExecModeSession(
 	ctx context.Context,
 	program []string,
 ) error {
-	cnt, err := c.networkHandler.dockerClient.createContainer(
-		ctx,
-		c.networkHandler.labels,
-		c.env,
-		&c.pty,
-		program,
-	)
+	cnt, state, err := c.networkHandler.dockerClient.findContainer(ctx)
 	if err != nil {
 		return err
+	}
+
+	if cnt != nil { // a container has been found
+		if state != "running" && state != "exited" {
+			err = errors.New("Container state is not manageable! (State: " + state + ")")
+		}
+	} else { // not container has been found, creating a new one...
+		cnt, err = c.networkHandler.dockerClient.createContainer(
+			ctx,
+			c.networkHandler.labels,
+			c.env,
+			&c.pty,
+			program,
+		)
+		if err != nil {
+			return err
+		}
 	}
 	removeContainer := func() {
 		ctx, cancelFunc := context.WithTimeout(
