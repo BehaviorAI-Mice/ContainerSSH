@@ -1158,6 +1158,9 @@ loop:
 					onExit(137)
 					return
 				}
+			} else {
+				//TODO: correctly detach from container
+				return
 			}
 
 			if lastError = d.containerInspect(ctx, onExit); lastError == nil {
