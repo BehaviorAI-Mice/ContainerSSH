@@ -1160,6 +1160,7 @@ loop:
 				}
 			} else {
 				//TODO: correctly detach from container
+				onExit(0)
 				return
 			}
 
