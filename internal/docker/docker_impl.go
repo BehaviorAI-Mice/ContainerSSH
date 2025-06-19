@@ -364,11 +364,12 @@ loop:
 			ctx,
 			d.containerID,
 			types.ContainerAttachOptions{
-				Stream: true,
-				Stdin:  true,
-				Stdout: true,
-				Stderr: true,
-				Logs:   true,
+				Stream:     true,
+				Stdin:      true,
+				Stdout:     true,
+				Stderr:     true,
+				Logs:       true,
+				DetachKeys: "ctrl-d",
 			},
 		)
 		if lastError == nil {
