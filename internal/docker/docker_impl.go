@@ -138,7 +138,7 @@ loop:
 		pullReader, lastError = d.dockerClient.ImagePull(ctx, image, options)
 		if lastError == nil {
 			byt, lastError = io.ReadAll(pullReader)
-			fmt.Println(byt)
+			fmt.Println(string(byt))
 			if lastError == nil {
 				lastError = pullReader.Close()
 				if lastError == nil {
