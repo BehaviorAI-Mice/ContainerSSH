@@ -133,10 +133,12 @@ func (d *dockerV20Client) pullImage(ctx context.Context) error {
 loop:
 	for {
 		var pullReader io.ReadCloser
+		var byt []byte
 		d.backendRequestsMetric.Increment()
 		pullReader, lastError = d.dockerClient.ImagePull(ctx, image, options)
 		if lastError == nil {
-			_, lastError = io.ReadAll(pullReader)
+			byt, lastError = io.ReadAll(pullReader)
+			fmt.Println(byt)
 			if lastError == nil {
 				lastError = pullReader.Close()
 				if lastError == nil {
