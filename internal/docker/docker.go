@@ -44,6 +44,12 @@ type dockerClient interface {
 	findContainer(
 		ctx context.Context,
 	) (dockerContainer, string, error)
+
+	// getGPUs get GPUs that are currently used by running containers.
+	// Return the list of gpus.
+	getGPUs(
+		ctx context.Context,
+	) ([]string, error)
 }
 
 // dockerContainer is the representation of a created container.

@@ -210,7 +210,7 @@ func (d *dockerV20Client) findContainer(
 		d.backendFailuresMetric.Increment()
 		err = message.WrapUser(
 			err,
-			message.MDockerContainerListFailed,
+			message.EDockerContainerListFailed,
 			UserMessageInitializeSSHSession,
 			"failed to list containers",
 		)
@@ -238,10 +238,65 @@ func (d *dockerV20Client) findContainer(
 			logger.Debug(message.NewMessage(message.MDockerContainerList, "No container found with name %s!", containerName))
 			return nil, "", nil
 		} else {
-			logger.Debug(message.NewMessage(message.MDockerContainerListFailed, "More than one containers found with name %s!", containerName))
+			logger.Debug(message.NewMessage(message.EDockerContainerListFailed, "More than one containers found with name %s!", containerName))
 			return nil, "", errors.New("More than one containers found with name " + containerName)
 		}
 	}
+}
+
+func (d *dockerV20Client) getGPUs(
+	ctx context.Context,
+) ([]string, error) {
+	logger := d.logger
+	logger.Debug(message.NewMessage(message.MDockerContainerList, "Listing containers..."))
+
+	var containers []types.Container
+	var err error
+
+	d.backendRequestsMetric.Increment()
+	containers, err = d.dockerClient.ContainerList(ctx, types.ContainerListOptions{})
+	if err != nil {
+		d.backendFailuresMetric.Increment()
+		err = message.WrapUser(
+			err,
+			message.EDockerContainerListFailed,
+			UserMessageInitializeSSHSession,
+			"failed to list containers",
+		)
+		logger.Error(err)
+		return nil, err
+	}
+
+	var gpus []string
+
+	for _, cnt := range containers {
+		var inspect types.ContainerJSON
+
+		d.backendRequestsMetric.Increment()
+		inspect, err = d.dockerClient.ContainerInspect(ctx, cnt.ID)
+		if err != nil {
+			d.backendFailuresMetric.Increment()
+			err = message.WrapUser(
+				err,
+				message.EDockerListGPUsFailed,
+				UserMessageInitializeSSHSession,
+				"failed to inspect container "+cnt.ID+": "+cnt.Names[0],
+			)
+			logger.Error(err)
+			return nil, err
+		}
+
+		if inspect.HostConfig.DeviceRequests != nil {
+			for _, req := range inspect.HostConfig.DeviceRequests {
+				if req.Driver == "nvidia" && len(req.DeviceIDs) > 0 {
+					gpus = append(gpus, req.DeviceIDs...)
+				}
+			}
+		}
+	}
+
+	logger.Debug(message.NewMessage(message.MDockerListGPUs, "GPUs found: %s!", strings.Join(gpus, ", ")))
+	return gpus, nil
 }
 
 func (d *dockerV20Client) createContainer(

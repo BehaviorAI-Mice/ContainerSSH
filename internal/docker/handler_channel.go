@@ -150,7 +150,11 @@ func (c *channelHandler) handleExecModeSession(
 	program []string,
 ) error {
 	// Check GPU Status
-	_, err := c.session.Stdout().Write([]byte("Checking GPU status...\n"))
+	gpus, err := c.networkHandler.dockerClient.getGPUs(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = c.session.Stdout().Write([]byte("Used GPU: " + strings.Join(gpus, ", ") + "\n"))
 	time.Sleep(5 * time.Second) // Simulate some delay for checking GPU status
 	if err != nil {
 		return err
