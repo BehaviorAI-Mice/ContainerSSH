@@ -267,6 +267,14 @@ func (d *dockerV20Client) getGPUs(
 		return nil, err
 	}
 
+	var containerNames []string
+	for _, cnt := range containers {
+		if len(cnt.Names) > 0 {
+			containerNames = append(containerNames, strings.TrimPrefix(cnt.Names[0], "/"))
+		}
+	}
+	logger.Debug(message.NewMessage(message.MDockerContainerList, "Found containers with names %s.", strings.Join(containerNames, ", ")))
+
 	var gpus []string
 
 	for _, cnt := range containers {
