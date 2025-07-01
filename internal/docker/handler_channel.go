@@ -153,6 +153,9 @@ func (c *channelHandler) handleExecModeSession(
 	if err != nil {
 		return err
 	}
+	c.networkHandler.logger.Info("GPUs : " + strings.Join(gpus, ", "))
+	c.networkHandler.logger.Info("Used GPUs : " + strings.Join(usedGPUs, ", "))
+
 	commonGPUs := getCommonItems(gpus, usedGPUs)
 	if len(commonGPUs) == 0 {
 		_, err = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + " - Used GPU: " +
