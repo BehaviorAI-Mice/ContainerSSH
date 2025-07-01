@@ -164,12 +164,11 @@ func (c *channelHandler) handleExecModeSession(
 			return err
 		}
 
-		err = message.NewMessage(
+		return message.NewMessage(
 			message.EDockerConfigError,
 			"User tried to use GPUs that are already in use! (user: %s, Requested GPUs: %s, Used GPUs: %s)",
 			c.username, gpus, usedGPUs,
 		)
-		return nil
 	}
 
 	cnt, state, err := c.networkHandler.dockerClient.findContainer(ctx)
