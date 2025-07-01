@@ -312,6 +312,16 @@ func (d *dockerV20Client) getGPUs(
 	return gpus, nil
 }
 
+func (d *dockerV20Client) getGPU() []string {
+	var gpus []string
+	for _, req := range d.config.Execution.HostConfig.DeviceRequests {
+		if req.Driver == "nvidia" && len(req.DeviceIDs) > 0 {
+			gpus = append(gpus, req.DeviceIDs...)
+		}
+	}
+	return gpus
+}
+
 func (d *dockerV20Client) createContainer(
 	ctx context.Context,
 	labels map[string]string,
@@ -1351,14 +1361,4 @@ func isPermanentError(err error) bool {
 		client.IsErrNotImplemented(err) ||
 		client.IsErrPluginPermissionDenied(err) ||
 		client.IsErrUnauthorized(err)
-}
-
-func (d *dockerV20Container) getGPU() []string {
-	var gpus []string
-	for _, req := range d.config.Execution.HostConfig.DeviceRequests {
-		if req.Driver == "nvidia" && len(req.DeviceIDs) > 0 {
-			gpus = append(gpus, req.DeviceIDs...)
-		}
-	}
-	return gpus
 }

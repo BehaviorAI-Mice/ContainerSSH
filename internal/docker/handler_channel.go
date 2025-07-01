@@ -148,8 +148,7 @@ func (c *channelHandler) handleExecModeSession(
 	program []string,
 ) error {
 	// Check GPU Status
-	print(c.networkHandler.container)
-	gpus := c.networkHandler.container.getGPU()
+	gpus := c.networkHandler.dockerClient.getGPU()
 	usedGPUs, err := c.networkHandler.dockerClient.getGPUs(ctx)
 	if err != nil {
 		return err
