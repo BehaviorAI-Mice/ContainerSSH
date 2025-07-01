@@ -250,11 +250,10 @@ func (d *dockerV20Client) getGPUs(
 	logger := d.logger
 	logger.Debug(message.NewMessage(message.MDockerContainerList, "Listing containers..."))
 
-	var containers []types.Container
-	var err error
+	containerName := d.config.Execution.DockerLaunchConfig.ContainerName
 
 	d.backendRequestsMetric.Increment()
-	containers, err = d.dockerClient.ContainerList(ctx, types.ContainerListOptions{})
+	containersList, err := d.dockerClient.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
 		d.backendFailuresMetric.Increment()
 		err = message.WrapUser(
@@ -268,9 +267,15 @@ func (d *dockerV20Client) getGPUs(
 	}
 
 	var containerNames []string
-	for _, cnt := range containers {
+	var containers []types.Container
+
+	for _, cnt := range containersList {
 		if len(cnt.Names) > 0 {
-			containerNames = append(containerNames, strings.TrimPrefix(cnt.Names[0], "/"))
+			cntName := strings.TrimPrefix(cnt.Names[0], "/")
+			if cntName != containerName { // Skip the container we are currently using
+				containerNames = append(containerNames, cntName)
+				containers = append(containers, cnt)
+			}
 		}
 	}
 	logger.Debug(message.NewMessage(message.MDockerContainerList, "Found containers with names %s.", strings.Join(containerNames, ", ")))
@@ -1346,4 +1351,14 @@ func isPermanentError(err error) bool {
 		client.IsErrNotImplemented(err) ||
 		client.IsErrPluginPermissionDenied(err) ||
 		client.IsErrUnauthorized(err)
+}
+
+func (d *dockerV20Container) getGPU() []string {
+	var gpus []string
+	for _, req := range d.config.Execution.HostConfig.DeviceRequests {
+		if req.Driver == "nvidia" && len(req.DeviceIDs) > 0 {
+			gpus = append(gpus, req.DeviceIDs...)
+		}
+	}
+	return gpus
 }

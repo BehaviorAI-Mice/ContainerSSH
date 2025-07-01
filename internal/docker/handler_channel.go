@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"strings"
-	"time"
-
 	"go.containerssh.io/containerssh/config"
 	"go.containerssh.io/containerssh/internal/sshserver"
 	"go.containerssh.io/containerssh/internal/unixutils"
 	"go.containerssh.io/containerssh/message"
+	"io"
+	"strings"
 )
 
 type channelHandler struct {
@@ -150,13 +148,16 @@ func (c *channelHandler) handleExecModeSession(
 	program []string,
 ) error {
 	// Check GPU Status
-	gpus, err := c.networkHandler.dockerClient.getGPUs(ctx)
+	gpus := c.networkHandler.container.getGPU()
+	usedGPUs, err := c.networkHandler.dockerClient.getGPUs(ctx)
 	if err != nil {
 		return err
 	}
-	_, err = c.session.Stdout().Write([]byte("Used GPU: " + strings.Join(gpus, ", ") + "\n"))
-	time.Sleep(5 * time.Second) // Simulate some delay for checking GPU status
-	if err != nil {
+	commonGPUs := getCommonItems(gpus, usedGPUs)
+	if len(commonGPUs) == 0 {
+		_, err = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + " - Used GPU: " +
+			strings.Join(commonGPUs, ", ") + ") While they are in use! Please contact administrator, " +
+			"or change your GPU settings at your dashboard! \n"))
 		return err
 	}
 
@@ -339,4 +340,26 @@ func (c *channelHandler) OnShutdown(shutdownContext context.Context) {
 		case <-c.exec.done():
 		}
 	}
+}
+
+func getCommonItems(list1, list2 []string) []string {
+	var common []string
+
+	for _, item1 := range list1 {
+		for _, item2 := range list2 {
+			if item1 == item2 && !contains(common, item1) {
+				common = append(common, item1)
+			}
+		}
+	}
+	return common
+}
+
+func contains(list []string, item string) bool {
+	for _, val := range list {
+		if val == item {
+			return true
+		}
+	}
+	return false
 }

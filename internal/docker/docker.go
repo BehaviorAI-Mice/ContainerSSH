@@ -68,6 +68,10 @@ type dockerContainer interface {
 
 	// remove removes the container within the given context.
 	remove(ctx context.Context) error
+
+	// getGPU returns the list of GPUs that are currently used by the container.
+	// This is a list of GPU IDs, e.g. ["0", "1"]
+	getGPU() []string
 }
 
 // dockerExecution is an execution process on either an "exec" process or attached to the main console of a container.
