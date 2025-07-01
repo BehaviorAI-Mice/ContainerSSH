@@ -158,7 +158,10 @@ func (c *channelHandler) handleExecModeSession(
 		_, err = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + " - Used GPU: " +
 			strings.Join(commonGPUs, ", ") + ") While they are in use! Please contact administrator, " +
 			"or change your GPU settings at your dashboard! \n"))
-		return err
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	cnt, state, err := c.networkHandler.dockerClient.findContainer(ctx)
