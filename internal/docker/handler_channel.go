@@ -158,12 +158,16 @@ func (c *channelHandler) handleExecModeSession(
 
 	commonGPUs := getCommonItems(gpus, usedGPUs)
 	if len(commonGPUs) != 0 {
-		_, err = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + " - Used GPU: " +
-			strings.Join(commonGPUs, ", ") + ") While they are in use! Please contact administrator, " +
-			"or change your GPU settings at your dashboard! \n"))
+		_, err = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + strings.Join(commonGPUs, ", ") +
+			") While they are in use! Please contact administrator, or change your GPU settings at your dashboard"))
 		if err != nil {
 			return err
 		}
+
+		err = message.NewMessage(
+			message.EDockerConfigError,
+			"User tried to use GPUs that are already in use!",
+		)
 		return nil
 	}
 
