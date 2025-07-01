@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-    "go.containerssh.io/containerssh/config"
-    "go.containerssh.io/containerssh/http"
-    "go.containerssh.io/containerssh/internal/metrics"
-    "go.containerssh.io/containerssh/log"
-    "go.containerssh.io/containerssh/message"
-    "go.containerssh.io/containerssh/metadata"
+	"go.containerssh.io/containerssh/config"
+	"go.containerssh.io/containerssh/http"
+	"go.containerssh.io/containerssh/internal/metrics"
+	"go.containerssh.io/containerssh/log"
+	"go.containerssh.io/containerssh/message"
+	"go.containerssh.io/containerssh/metadata"
 )
 
 type client struct {
@@ -51,6 +51,9 @@ loop:
 
 		lastError = c.configServerRequest(&request, &response)
 		if lastError == nil {
+			// Check for GPU availability
+			logger.Info(response)
+
 			c.logConfigResponse(logger)
 			return response.Config, response.ConnectionAuthenticatedMetadata, nil
 		}
