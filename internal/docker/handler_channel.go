@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"go.containerssh.io/containerssh/config"
 	"go.containerssh.io/containerssh/internal/sshserver"
@@ -150,6 +151,7 @@ func (c *channelHandler) handleExecModeSession(
 ) error {
 	// Check GPU Status
 	_, err := c.session.Stdout().Write([]byte("Checking GPU status...\n"))
+	time.Sleep(5 * time.Second) // Simulate some delay for checking GPU status
 	if err != nil {
 		return err
 	}
