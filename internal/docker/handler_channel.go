@@ -148,6 +148,12 @@ func (c *channelHandler) handleExecModeSession(
 	ctx context.Context,
 	program []string,
 ) error {
+	// Check GPU Status
+	_, err := c.session.Stdout().Write([]byte("Checking GPU status...\n"))
+	if err != nil {
+		return err
+	}
+
 	cnt, state, err := c.networkHandler.dockerClient.findContainer(ctx)
 	if err != nil {
 		return err

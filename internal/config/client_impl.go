@@ -51,9 +51,6 @@ loop:
 
 		lastError = c.configServerRequest(&request, &response)
 		if lastError == nil {
-			// Check for GPU availability
-			logger.Info(response)
-
 			c.logConfigResponse(logger)
 			return response.Config, response.ConnectionAuthenticatedMetadata, nil
 		}
