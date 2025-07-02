@@ -91,20 +91,24 @@ func (c *channelHandler) run(
 
 	commonGPUs := getCommonItems(gpus, usedGPUs)
 	if len(commonGPUs) != 0 {
-		c.networkHandler.logger.Info("Here 1 ------------------------------------------------------")
 		_, err_ = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + strings.Join(commonGPUs, ", ") +
 			") While they are in use! Please contact administrator, or change your GPU settings at your dashboard. \n\r"))
-		c.networkHandler.logger.Info("Here 2 ------------------------------------------------------")
 		if err_ != nil {
-			c.networkHandler.logger.Info("Here 3 ------------------------------------------------------")
 			return err_
 		}
 
-		c.networkHandler.logger.Info("Here 4 ------------------------------------------------------")
+		c.session.ExitStatus(uint32(0))
+		if err := c.session.Close(); err != nil && !errors.Is(err, io.EOF) {
+			c.networkHandler.logger.Debug(
+				message.Wrap(
+					err,
+					message.EDockerFailedOutputCloseWriting,
+					"failed to close session",
+				))
+		}
 
 		return nil
 	}
-	c.networkHandler.logger.Info("Here 5 ------------------------------------------------------")
 
 	c.networkHandler.mutex.Lock()
 	defer c.networkHandler.mutex.Unlock()
