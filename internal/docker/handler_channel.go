@@ -91,18 +91,24 @@ func (c *channelHandler) run(
 
 	commonGPUs := getCommonItems(gpus, usedGPUs)
 	if len(commonGPUs) != 0 {
+		c.networkHandler.logger.Info("Here 1 ------------------------------------------------------")
 		_, err_ = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + strings.Join(commonGPUs, ", ") +
 			") While they are in use! Please contact administrator, or change your GPU settings at your dashboard. \n\r"))
+		c.networkHandler.logger.Info("Here 2 ------------------------------------------------------")
 		if err_ != nil {
+			c.networkHandler.logger.Info("Here 3 ------------------------------------------------------")
+			c.networkHandler.logger.Error(err_)
 			return err_
 		}
 
+		c.networkHandler.logger.Info("Here 4 ------------------------------------------------------")
 		return message.NewMessage(
 			message.EDockerConfigError,
 			"User tried to use GPUs that are already in use! (user: %s, Requested GPUs: %s, Used GPUs: %s)",
 			c.username, gpus, usedGPUs,
 		)
 	}
+	c.networkHandler.logger.Info("Here 5 ------------------------------------------------------")
 
 	c.networkHandler.mutex.Lock()
 	defer c.networkHandler.mutex.Unlock()
