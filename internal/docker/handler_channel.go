@@ -97,16 +97,12 @@ func (c *channelHandler) run(
 		c.networkHandler.logger.Info("Here 2 ------------------------------------------------------")
 		if err_ != nil {
 			c.networkHandler.logger.Info("Here 3 ------------------------------------------------------")
-			c.networkHandler.logger.Error(err_)
 			return err_
 		}
 
 		c.networkHandler.logger.Info("Here 4 ------------------------------------------------------")
-		return message.NewMessage(
-			message.EDockerConfigError,
-			"User tried to use GPUs that are already in use! (user: %s, Requested GPUs: %s, Used GPUs: %s)",
-			c.username, gpus, usedGPUs,
-		)
+
+		return nil
 	}
 	c.networkHandler.logger.Info("Here 5 ------------------------------------------------------")
 
