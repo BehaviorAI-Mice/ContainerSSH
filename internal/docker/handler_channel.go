@@ -80,6 +80,30 @@ func (c *channelHandler) run(
 	ctx context.Context,
 	program []string,
 ) error {
+	// Check GPU Status
+	gpus := c.networkHandler.dockerClient.getGPU()
+	usedGPUs, err_ := c.networkHandler.dockerClient.getGPUs(ctx)
+	if err_ != nil {
+		return err_
+	}
+	c.networkHandler.logger.Info("GPUs : " + strings.Join(gpus, ", "))
+	c.networkHandler.logger.Info("Used GPUs : " + strings.Join(usedGPUs, ", "))
+
+	commonGPUs := getCommonItems(gpus, usedGPUs)
+	if len(commonGPUs) != 0 {
+		_, err_ = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + strings.Join(commonGPUs, ", ") +
+			") While they are in use! Please contact administrator, or change your GPU settings at your dashboard. \n\r"))
+		if err_ != nil {
+			return err_
+		}
+
+		return message.NewMessage(
+			message.EDockerConfigError,
+			"User tried to use GPUs that are already in use! (user: %s, Requested GPUs: %s, Used GPUs: %s)",
+			c.username, gpus, usedGPUs,
+		)
+	}
+
 	c.networkHandler.mutex.Lock()
 	defer c.networkHandler.mutex.Unlock()
 	if c.exec != nil {
@@ -147,30 +171,6 @@ func (c *channelHandler) handleExecModeSession(
 	ctx context.Context,
 	program []string,
 ) error {
-	// Check GPU Status
-	gpus := c.networkHandler.dockerClient.getGPU()
-	usedGPUs, err := c.networkHandler.dockerClient.getGPUs(ctx)
-	if err != nil {
-		return err
-	}
-	c.networkHandler.logger.Info("GPUs : " + strings.Join(gpus, ", "))
-	c.networkHandler.logger.Info("Used GPUs : " + strings.Join(usedGPUs, ", "))
-
-	commonGPUs := getCommonItems(gpus, usedGPUs)
-	if len(commonGPUs) != 0 {
-		_, err = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + strings.Join(commonGPUs, ", ") +
-			") While they are in use! Please contact administrator, or change your GPU settings at your dashboard. \n\r"))
-		if err != nil {
-			return err
-		}
-
-		return message.NewMessage(
-			message.EDockerConfigError,
-			"User tried to use GPUs that are already in use! (user: %s, Requested GPUs: %s, Used GPUs: %s)",
-			c.username, gpus, usedGPUs,
-		)
-	}
-
 	cnt, state, err := c.networkHandler.dockerClient.findContainer(ctx)
 	if err != nil {
 		return err
