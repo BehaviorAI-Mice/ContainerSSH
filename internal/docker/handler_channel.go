@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"strings"
-
 	"go.containerssh.io/containerssh/config"
 	"go.containerssh.io/containerssh/internal/sshserver"
 	"go.containerssh.io/containerssh/internal/unixutils"
 	"go.containerssh.io/containerssh/message"
+	"io"
+	"strings"
 )
 
 type channelHandler struct {
@@ -81,6 +80,36 @@ func (c *channelHandler) run(
 	ctx context.Context,
 	program []string,
 ) error {
+	// Check GPU Status
+	gpus := c.networkHandler.dockerClient.getGPU()
+	usedGPUs, err_ := c.networkHandler.dockerClient.getGPUs(ctx)
+	if err_ != nil {
+		return err_
+	}
+	c.networkHandler.logger.Info("GPUs : " + strings.Join(gpus, ", "))
+	c.networkHandler.logger.Info("Used GPUs : " + strings.Join(usedGPUs, ", "))
+
+	commonGPUs := getCommonItems(gpus, usedGPUs)
+	if len(commonGPUs) != 0 {
+		_, err_ = c.session.Stdout().Write([]byte("You are trying to use GPUs (" + strings.Join(commonGPUs, ", ") +
+			") While they are in use! Please contact administrator, or change your GPU settings at your dashboard. \n\r"))
+		if err_ != nil {
+			return err_
+		}
+
+		c.session.ExitStatus(uint32(0))
+		if err := c.session.Close(); err != nil && !errors.Is(err, io.EOF) {
+			c.networkHandler.logger.Debug(
+				message.Wrap(
+					err,
+					message.EDockerFailedOutputCloseWriting,
+					"failed to close session",
+				))
+		}
+
+		return nil
+	}
+
 	c.networkHandler.mutex.Lock()
 	defer c.networkHandler.mutex.Unlock()
 	if c.exec != nil {
@@ -327,4 +356,26 @@ func (c *channelHandler) OnShutdown(shutdownContext context.Context) {
 		case <-c.exec.done():
 		}
 	}
+}
+
+func getCommonItems(list1, list2 []string) []string {
+	var common []string
+
+	for _, item1 := range list1 {
+		for _, item2 := range list2 {
+			if item1 == item2 && !contains(common, item1) {
+				common = append(common, item1)
+			}
+		}
+	}
+	return common
+}
+
+func contains(list []string, item string) bool {
+	for _, val := range list {
+		if val == item {
+			return true
+		}
+	}
+	return false
 }
